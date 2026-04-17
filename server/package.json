@@ -1,0 +1,13 @@
+{
+  "name": "chessxox-server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}
