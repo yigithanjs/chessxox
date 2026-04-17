@@ -27,6 +27,12 @@ function App() {
   const onlineRoom = useOnlineRoom(mode === 'online')
   const gameState = mode === 'online' ? onlineRoom.gameState ?? EMPTY_GAME_STATE : offlineGameState
   const legalActions = getLegalActions(gameState, gameState.currentPlayer)
+  const boardOrientation =
+    mode === 'bot'
+      ? humanSide
+      : mode === 'online' && onlineRoom.playerSide === 'black'
+        ? 'black'
+        : 'white'
   const activeSelectedCell =
     selectedCell !== null &&
     gameState.board[selectedCell] === gameState.currentPlayer &&
@@ -194,6 +200,7 @@ function App() {
             selectedCell={activeSelectedCell}
             winnerLine={gameState.winnerLine}
             disabled={!canInteract}
+            orientation={boardOrientation}
             onCellClick={handleCellClick}
           />
         </div>

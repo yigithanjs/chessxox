@@ -6,6 +6,7 @@ type BoardProps = {
   selectedCell: number | null
   winnerLine: number[] | null
   disabled: boolean
+  orientation?: 'white' | 'black'
   onCellClick: (index: number) => void
 }
 
@@ -18,10 +19,13 @@ export function Board({
   selectedCell,
   winnerLine,
   disabled,
+  orientation = 'white',
   onCellClick,
 }: BoardProps) {
   const winnerSet = new Set(winnerLine ?? [])
-  const selectableCells = new Set(legalActions.filter((action) => action.from !== undefined).map((action) => action.from))
+  const selectableCells = new Set(
+    legalActions.filter((action) => action.from !== undefined).map((action) => action.from),
+  )
   const dropTargets = new Set(
     selectedCell === null
       ? legalActions.filter((action) => action.type === 'drop').map((action) => action.to)
@@ -45,17 +49,18 @@ export function Board({
   return (
     <section className="board-shell" aria-label="Chessxox board">
       <div className="board">
-        {board.map((cell, index) => {
-          const squareName = indexToSquare(index)
+        {getDisplayIndexes(orientation).map((boardIndex) => {
+          const cell = board[boardIndex]
+          const squareName = indexToSquare(boardIndex)
           const classes = [
             'board-cell',
             cell ? `board-cell--${cell}` : 'board-cell--empty',
-            selectedCell === index ? 'is-selected' : '',
-            selectableCells.has(index) ? 'is-selectable' : '',
-            dropTargets.has(index) ? 'is-drop-target' : '',
-            moveTargets.has(index) ? 'is-move-target' : '',
-            captureTargets.has(index) ? 'is-capture-target' : '',
-            winnerSet.has(index) ? 'is-winning' : '',
+            selectedCell === boardIndex ? 'is-selected' : '',
+            selectableCells.has(boardIndex) ? 'is-selectable' : '',
+            dropTargets.has(boardIndex) ? 'is-drop-target' : '',
+            moveTargets.has(boardIndex) ? 'is-move-target' : '',
+            captureTargets.has(boardIndex) ? 'is-capture-target' : '',
+            winnerSet.has(boardIndex) ? 'is-winning' : '',
           ]
             .filter(Boolean)
             .join(' ')
@@ -65,9 +70,9 @@ export function Board({
               key={squareName}
               type="button"
               className={classes}
-              onClick={() => onCellClick(index)}
+              onClick={() => onCellClick(boardIndex)}
               disabled={disabled}
-              aria-label={buildCellLabel(squareName, cell, selectedCell === index)}
+              aria-label={buildCellLabel(squareName, cell, selectedCell === boardIndex)}
             >
               <span className="board-cell__coord">{squareName}</span>
               {cell ? (
@@ -76,7 +81,11 @@ export function Board({
                 </span>
               ) : (
                 <span className="board-cell__hint" aria-hidden="true">
-                  {captureTargets.has(index) ? 'x' : dropTargets.has(index) || moveTargets.has(index) ? '•' : ''}
+                  {captureTargets.has(boardIndex)
+                    ? 'x'
+                    : dropTargets.has(boardIndex) || moveTargets.has(boardIndex)
+                      ? '.'
+                      : ''}
                 </span>
               )}
             </button>
@@ -99,4 +108,10 @@ function indexToSquare(index: number) {
   const rank = 3 - Math.floor(index / 3)
 
   return `${file}${rank}`
+}
+
+function getDisplayIndexes(orientation: 'white' | 'black') {
+  const indexes = Array.from({ length: 9 }, (_, index) => index)
+
+  return orientation === 'black' ? indexes.reverse() : indexes
 }
