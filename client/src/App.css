@@ -276,7 +276,6 @@
   padding: 0;
   color: var(--text);
   transition:
-    transform 140ms ease,
     box-shadow 140ms ease,
     background-color 140ms ease;
   cursor: pointer;
@@ -289,10 +288,6 @@
 
 .board-cell--dark {
   background: #b57435;
-}
-
-.board-cell:hover:not(:disabled) {
-  transform: scale(0.985);
 }
 
 .board-cell:disabled {
