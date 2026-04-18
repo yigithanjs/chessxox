@@ -248,6 +248,7 @@
   border-radius: 22px;
   aspect-ratio: 1;
   isolation: isolate;
+  background: #c18a4b;
 }
 
 .board__win-line {
@@ -277,21 +278,21 @@
   transition:
     transform 140ms ease,
     box-shadow 140ms ease,
-    filter 140ms ease;
+    background-color 140ms ease;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 231, 0.16);
 }
 
 .board-cell--light {
-  background: linear-gradient(180deg, var(--board-light), #ead19d);
+  background: #efd79b;
 }
 
 .board-cell--dark {
-  background: linear-gradient(180deg, var(--board-dark), #b07234);
+  background: #b57435;
 }
 
 .board-cell:hover:not(:disabled) {
   transform: scale(0.985);
-  filter: brightness(1.03);
 }
 
 .board-cell:disabled {
@@ -299,7 +300,9 @@
 }
 
 .board-cell.is-selectable:not(.is-selected) {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 0 0 999px rgba(255, 255, 255, 0.02);
 }
 
 .board-cell.is-selected {
