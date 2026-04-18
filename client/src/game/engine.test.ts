@@ -54,23 +54,35 @@ describe('engine', () => {
       currentPlayer: 'black',
     })
 
-    expect(getLegalActions(whiteState, 'white')).toEqual([
-      { type: 'capture', from: 7, to: 3 },
-      { type: 'capture', from: 7, to: 5 },
-    ])
-    expect(getLegalActions(blackState, 'black')).toEqual([
-      { type: 'capture', from: 1, to: 3 },
-      { type: 'capture', from: 1, to: 5 },
-    ])
+    expect(getLegalActions(whiteState, 'white')).toEqual(
+      expect.arrayContaining([
+        { type: 'capture', from: 7, to: 3 },
+        { type: 'capture', from: 7, to: 5 },
+      ]),
+    )
+    expect(getLegalActions(blackState, 'black')).toEqual(
+      expect.arrayContaining([
+        { type: 'capture', from: 1, to: 3 },
+        { type: 'capture', from: 1, to: 5 },
+      ]),
+    )
   })
 
-  test('forced capture suppresses pushes and drops', () => {
+  test('captures no longer suppress moves and drops', () => {
     const state = makeState({
       board: [null, null, null, 'black', null, null, null, 'white', null],
       currentPlayer: 'white',
     })
 
-    expect(getLegalActions(state, 'white')).toEqual([{ type: 'capture', from: 7, to: 3 }])
+    const actions = getLegalActions(state, 'white')
+
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { type: 'capture', from: 7, to: 3 },
+        { type: 'move', from: 7, to: 4 },
+      ]),
+    )
+    expect(actions.some((action) => action.type === 'drop')).toBe(true)
   })
 
   test('switches turns after drop, move, and capture', () => {

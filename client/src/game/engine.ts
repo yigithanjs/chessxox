@@ -115,10 +115,6 @@ export function getLegalActions(
     }
   })
 
-  if (captures.length > 0) {
-    return captures
-  }
-
   const drops: Action[] = state.board.flatMap((cell, index) =>
     cell === null
       ? [
@@ -130,7 +126,7 @@ export function getLegalActions(
       : [],
   )
 
-  return [...moves, ...drops]
+  return [...captures, ...moves, ...drops]
 }
 
 export function applyAction(state: GameState, action: Action): GameState {

@@ -4,10 +4,6 @@ type OnlinePanelProps = {
   roomId: string | null
   inviteLink: string | null
   playerSide: Player | null
-  players: {
-    white: boolean
-    black: boolean
-  }
   connectionState: 'idle' | 'connecting' | 'connected' | 'error'
   roomStatus: 'idle' | 'waiting' | 'ready'
   message: string
@@ -21,7 +17,6 @@ export function OnlinePanel({
   roomId,
   inviteLink,
   playerSide,
-  players,
   connectionState,
   roomStatus,
   message,
@@ -31,53 +26,31 @@ export function OnlinePanel({
   onLeaveRoom,
 }: OnlinePanelProps) {
   return (
-    <section className="panel online-panel">
-      <div className="panel__header">
-        <p className="panel__eyebrow">Online Rooms</p>
-        <h2>Share a link</h2>
+    <section className="online-strip" aria-label="Online room controls">
+      <div className="online-strip__chips">
+        <span className={connectionState === 'connected' ? 'online-chip is-live' : 'online-chip'}>
+          {readableConnection(connectionState)}
+        </span>
+        <span className="online-chip">{roomId ?? 'No room'}</span>
+        <span className="online-chip">{roomStatus === 'ready' ? 'Ready' : 'Waiting'}</span>
+        <span className="online-chip">{playerSide ? readablePlayer(playerSide) : 'Unassigned'}</span>
       </div>
 
-      <div className="online-summary">
-        <p>
-          <strong>Connection:</strong> {readableConnection(connectionState)}
-        </p>
-        <p>
-          <strong>Room:</strong> {roomId ?? 'No active room'}
-        </p>
-        <p>
-          <strong>Your side:</strong> {playerSide ? readablePlayer(playerSide) : 'Unassigned'}
-        </p>
-        <p>
-          <strong>Match:</strong> {roomStatus === 'ready' ? 'Both players connected' : 'Waiting for opponent'}
-        </p>
-      </div>
-
-      <div className="presence-list">
-        <div className={players.white ? 'presence-pill is-online' : 'presence-pill'}>
-          White {players.white ? 'connected' : 'missing'}
-        </div>
-        <div className={players.black ? 'presence-pill is-online' : 'presence-pill'}>
-          Black {players.black ? 'connected' : 'missing'}
-        </div>
-      </div>
-
-      <p className="online-panel__message">{message}</p>
-
-      <div className="online-actions">
-        <button type="button" className="action-button" onClick={onCreateRoom}>
-          Create room
+      <div className="online-strip__actions">
+        <button type="button" className="control-chip control-chip--button" onClick={onCreateRoom}>
+          {roomId ? 'New room' : 'Create room'}
         </button>
         <button
           type="button"
-          className="secondary-button"
+          className="control-chip control-chip--button"
           onClick={onCopyInvite}
           disabled={!inviteLink}
         >
-          Copy invite link
+          Copy link
         </button>
         <button
           type="button"
-          className="secondary-button"
+          className="control-chip control-chip--button"
           onClick={onReconnect}
           disabled={!roomId && !inviteLink}
         >
@@ -85,13 +58,15 @@ export function OnlinePanel({
         </button>
         <button
           type="button"
-          className="secondary-button"
+          className="control-chip control-chip--button"
           onClick={onLeaveRoom}
           disabled={!roomId && !inviteLink}
         >
-          Leave room
+          Leave
         </button>
       </div>
+
+      <p className="online-strip__message">{message}</p>
     </section>
   )
 }

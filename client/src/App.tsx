@@ -1,4 +1,5 @@
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useEffect, useRef, useState } from 'react'
+import musicTrack from './assets/last-coin-standing.mp3'
 import './App.css'
 import { chooseEasyMove, chooseHardMove } from './ai/bot'
 import { applyAction, createInitialGameState, getLegalActions } from './game/engine'
@@ -7,7 +8,6 @@ import type { Action, Player } from './game/types'
 import { Board } from './ui/Board'
 import { Controls } from './ui/Controls'
 import { OnlinePanel } from './ui/OnlinePanel'
-import { RulesPanel } from './ui/RulesPanel'
 import { StatusBanner } from './ui/StatusBanner'
 
 type GameMode = 'bot' | 'local' | 'online'
@@ -23,6 +23,8 @@ function App() {
   const [offlineGameState, setOfflineGameState] = useState(() => createInitialGameState())
   const [selectedCell, setSelectedCell] = useState<number | null>(null)
   const [copyFeedback, setCopyFeedback] = useState('')
+  const [musicEnabled, setMusicEnabled] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const onlineRoom = useOnlineRoom(mode === 'online')
   const gameState = mode === 'online' ? onlineRoom.gameState ?? EMPTY_GAME_STATE : offlineGameState
@@ -49,6 +51,40 @@ function App() {
         onlineRoom.connectionState === 'connected' &&
         onlineRoom.roomStatus === 'ready' &&
         onlineRoom.playerSide === gameState.currentPlayer))
+
+  useEffect(() => {
+    const audio = new Audio(musicTrack)
+    audio.loop = true
+    audio.preload = 'auto'
+    audio.volume = 0.28
+    audioRef.current = audio
+
+    return () => {
+      audio.pause()
+      audio.src = ''
+      audioRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const audio = audioRef.current
+
+    if (!audio) {
+      return
+    }
+
+    if (!musicEnabled) {
+      audio.pause()
+      audio.currentTime = 0
+      return
+    }
+
+    const playResult = audio.play()
+
+    if (playResult && typeof playResult.catch === 'function') {
+      void playResult.catch(() => undefined)
+    }
+  }, [musicEnabled])
 
   useEffect(() => {
     if (mode !== 'online') {
@@ -175,24 +211,48 @@ function App() {
     const sideLabel = onlineRoom.playerSide ? capitalizePlayer(onlineRoom.playerSide) : 'No side assigned'
 
     if (onlineRoom.roomStatus === 'waiting') {
-      return `Room ${onlineRoom.roomId}. ${sideLabel}. Waiting for the other player to join.`
+      return `Room ${onlineRoom.roomId} - ${sideLabel} - Waiting`
     }
 
-    return `Room ${onlineRoom.roomId}. You are ${sideLabel}.`
+    return `Room ${onlineRoom.roomId} - ${sideLabel}`
   }
 
   return (
     <main className="app-shell">
-      <section className="game-stage panel">
-        <div className="game-stage__header">
+      <section className="game-stage">
+        <header className="game-stage__chrome">
           <StatusBanner
             state={gameState}
-            legalActions={legalActions}
             mode={mode}
             humanSide={(mode === 'online' ? onlineRoom.playerSide : humanSide) ?? 'white'}
             onlineNote={getOnlineNote()}
           />
-        </div>
+          <Controls
+            mode={mode}
+            difficulty={difficulty}
+            humanSide={humanSide}
+            musicEnabled={musicEnabled}
+            onModeChange={setMode}
+            onDifficultyChange={setDifficulty}
+            onHumanSideChange={setHumanSide}
+            onRestart={handleRestart}
+            onMusicToggle={() => setMusicEnabled((current) => !current)}
+          />
+          {mode === 'online' ? (
+            <OnlinePanel
+              roomId={onlineRoom.roomId}
+              inviteLink={onlineRoom.inviteLink}
+              playerSide={onlineRoom.playerSide}
+              connectionState={onlineRoom.connectionState}
+              roomStatus={onlineRoom.roomStatus}
+              message={copyFeedback || onlineRoom.message}
+              onCreateRoom={onlineRoom.createRoom}
+              onReconnect={onlineRoom.reconnect}
+              onCopyInvite={handleCopyInvite}
+              onLeaveRoom={onlineRoom.leaveRoom}
+            />
+          ) : null}
+        </header>
         <div className="game-stage__board">
           <Board
             board={gameState.board}
@@ -205,34 +265,6 @@ function App() {
           />
         </div>
       </section>
-
-      <aside className="sidebar">
-        <Controls
-          mode={mode}
-          difficulty={difficulty}
-          humanSide={humanSide}
-          onModeChange={setMode}
-          onDifficultyChange={setDifficulty}
-          onHumanSideChange={setHumanSide}
-          onRestart={handleRestart}
-        />
-        {mode === 'online' ? (
-          <OnlinePanel
-            roomId={onlineRoom.roomId}
-            inviteLink={onlineRoom.inviteLink}
-            playerSide={onlineRoom.playerSide}
-            players={onlineRoom.players}
-            connectionState={onlineRoom.connectionState}
-            roomStatus={onlineRoom.roomStatus}
-            message={copyFeedback || onlineRoom.message}
-            onCreateRoom={onlineRoom.createRoom}
-            onReconnect={onlineRoom.reconnect}
-            onCopyInvite={handleCopyInvite}
-            onLeaveRoom={onlineRoom.leaveRoom}
-          />
-        ) : null}
-        <RulesPanel />
-      </aside>
     </main>
   )
 }

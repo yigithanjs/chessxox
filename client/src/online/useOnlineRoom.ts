@@ -56,7 +56,7 @@ const INITIAL_ONLINE_STATE: OnlineRoomState = {
   playerSide: null,
   players: EMPTY_PRESENCE,
   gameState: createInitialGameState(),
-  message: 'Create a room or open a room link to play online.',
+  message: 'Create a room to play online.',
   inviteLink: null,
 }
 
@@ -122,7 +122,7 @@ export function useOnlineRoom(enabled: boolean) {
     setSession((current) => ({
       ...current,
       connectionState: 'connecting',
-      message: current.roomId ? 'Connecting back to the room server...' : 'Connecting to the room server...',
+      message: current.roomId ? 'Connecting to the room server...' : 'Connecting...',
     }))
 
     socket.addEventListener('open', () => {
@@ -194,11 +194,11 @@ export function useOnlineRoom(enabled: boolean) {
 
   function createRoom() {
     attemptedRoomRef.current = null
-    setSession((current) => ({
-      ...current,
-      connectionState: 'connecting',
-      message: 'Creating an online room...',
-    }))
+      setSession((current) => ({
+        ...current,
+        connectionState: 'connecting',
+        message: 'Creating room...',
+      }))
     connectAndQueue({ type: 'create_room' })
   }
 
@@ -209,12 +209,12 @@ export function useOnlineRoom(enabled: boolean) {
       return
     }
 
-    setSession((current) => ({
-      ...current,
-      roomId: normalizedRoomId,
-      connectionState: 'connecting',
-      message: `Joining room ${normalizedRoomId}...`,
-    }))
+      setSession((current) => ({
+        ...current,
+        roomId: normalizedRoomId,
+        connectionState: 'connecting',
+        message: `Joining ${normalizedRoomId}...`,
+      }))
     connectAndQueue({ type: 'join_room', roomId: normalizedRoomId })
   }
 
@@ -224,7 +224,7 @@ export function useOnlineRoom(enabled: boolean) {
     if (!roomId) {
       setSession((current) => ({
         ...current,
-        message: 'No room link is active yet.',
+        message: 'No room link is active.',
       }))
       return
     }
@@ -277,11 +277,11 @@ export function useOnlineRoom(enabled: boolean) {
       writeRoomToUrl(null)
     }
 
-    setSession({
-      ...INITIAL_ONLINE_STATE,
-      message: clearUrl ? 'Left the online room.' : INITIAL_ONLINE_STATE.message,
-      gameState: createInitialGameState(),
-    })
+      setSession({
+        ...INITIAL_ONLINE_STATE,
+        message: clearUrl ? 'Left room.' : INITIAL_ONLINE_STATE.message,
+        gameState: createInitialGameState(),
+      })
   }
 
   return {

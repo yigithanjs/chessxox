@@ -86,7 +86,7 @@ function createRoom(socket) {
   rooms.set(roomId, room)
   socket.roomId = roomId
   socket.playerSide = 'white'
-  broadcastRoomState(room, 'Room created. Share the link so black can join.')
+  broadcastRoomState(room, 'Room created. Share the link.')
 }
 
 function joinRoom(socket, roomId) {
@@ -123,7 +123,7 @@ function joinRoom(socket, roomId) {
   }
 
   socket.roomId = normalizedRoomId
-  broadcastRoomState(room, `${capitalize(socket.playerSide)} joined room ${normalizedRoomId}.`)
+  broadcastRoomState(room, `${capitalize(socket.playerSide)} joined ${normalizedRoomId}.`)
 }
 
 function playAction(socket, roomId, action) {
@@ -145,7 +145,7 @@ function playAction(socket, roomId, action) {
 
   try {
     room.state = applyAction(room.state, action)
-    broadcastRoomState(room, `${capitalize(socket.playerSide)} made a move.`)
+    broadcastRoomState(room, `${capitalize(socket.playerSide)} moved.`)
   } catch (error) {
     sendError(socket, error instanceof Error ? error.message : 'Move rejected.')
   }
@@ -159,7 +159,7 @@ function restartRoom(socket, roomId) {
   }
 
   room.state = createInitialGameState()
-  broadcastRoomState(room, 'The room match has been restarted.')
+  broadcastRoomState(room, 'Match restarted.')
 }
 
 function getRoom(socket, roomId) {
@@ -231,8 +231,8 @@ function sendRoomState(socket, room, overrideMessage) {
       message:
         overrideMessage ??
         (room.players.white && room.players.black
-          ? `Room ${room.id} is live. ${capitalize(room.state.currentPlayer)} to move.`
-          : `Room ${room.id} is waiting for both players.`),
+          ? `Room ${room.id} - ${capitalize(room.state.currentPlayer)} to move.`
+          : `Room ${room.id} - Waiting for both players.`),
       state: room.state,
     }),
   )
@@ -352,10 +352,6 @@ function getLegalActions(state, player = state.currentPlayer) {
     }
   })
 
-  if (captures.length > 0) {
-    return captures
-  }
-
   const drops = state.board.flatMap((cell, index) =>
     cell === null
       ? [
@@ -367,7 +363,7 @@ function getLegalActions(state, player = state.currentPlayer) {
       : [],
   )
 
-  return [...moves, ...drops]
+  return [...captures, ...moves, ...drops]
 }
 
 function applyAction(state, action) {

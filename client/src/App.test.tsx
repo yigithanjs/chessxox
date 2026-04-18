@@ -43,9 +43,20 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: /cell a2, empty/i }))
-    fireEvent.change(screen.getByLabelText(/game mode/i), { target: { value: 'local' } })
+    fireEvent.click(screen.getByRole('button', { name: /game mode/i }))
+    fireEvent.click(screen.getByRole('option', { name: /local 2p/i }))
 
     expect(screen.getAllByRole('button', { name: /empty/i })).toHaveLength(9)
     expect(screen.getByText(/white to move/i)).toBeInTheDocument()
+  })
+
+  test('music starts off and can be toggled on', () => {
+    render(<App />)
+
+    const toggle = screen.getByRole('button', { name: /music off/i })
+
+    fireEvent.click(toggle)
+
+    expect(screen.getByRole('button', { name: /music on/i })).toBeInTheDocument()
   })
 })

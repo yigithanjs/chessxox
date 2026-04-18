@@ -1,4 +1,6 @@
 import type { Action, Cell } from '../game/types'
+import whitePawn from '../assets/white-pawn.svg'
+import blackPawn from '../assets/black-pawn.svg'
 
 type BoardProps = {
   board: Cell[]
@@ -10,9 +12,6 @@ type BoardProps = {
   onCellClick: (index: number) => void
 }
 
-const WHITE_PAWN = '\u2659'
-const BLACK_PAWN = '\u265F'
-
 export function Board({
   board,
   legalActions,
@@ -23,6 +22,7 @@ export function Board({
   onCellClick,
 }: BoardProps) {
   const winnerSet = new Set(winnerLine ?? [])
+  const winLine = buildWinLine(winnerLine, orientation)
   const selectableCells = new Set(
     legalActions.filter((action) => action.from !== undefined).map((action) => action.from),
   )
@@ -49,11 +49,17 @@ export function Board({
   return (
     <section className="board-shell" aria-label="Chessxox board">
       <div className="board">
+        {winLine ? (
+          <svg className="board__win-line" viewBox="0 0 3 3" preserveAspectRatio="none" aria-hidden="true">
+            <line x1={winLine.x1} y1={winLine.y1} x2={winLine.x2} y2={winLine.y2} />
+          </svg>
+        ) : null}
         {getDisplayIndexes(orientation).map((boardIndex) => {
           const cell = board[boardIndex]
           const squareName = indexToSquare(boardIndex)
           const classes = [
             'board-cell',
+            isLightSquare(boardIndex) ? 'board-cell--light' : 'board-cell--dark',
             cell ? `board-cell--${cell}` : 'board-cell--empty',
             selectedCell === boardIndex ? 'is-selected' : '',
             selectableCells.has(boardIndex) ? 'is-selectable' : '',
@@ -74,20 +80,15 @@ export function Board({
               disabled={disabled}
               aria-label={buildCellLabel(squareName, cell, selectedCell === boardIndex)}
             >
-              <span className="board-cell__coord">{squareName}</span>
               {cell ? (
-                <span className={`piece piece--${cell}`} aria-hidden="true">
-                  {cell === 'white' ? WHITE_PAWN : BLACK_PAWN}
-                </span>
-              ) : (
-                <span className="board-cell__hint" aria-hidden="true">
-                  {captureTargets.has(boardIndex)
-                    ? 'x'
-                    : dropTargets.has(boardIndex) || moveTargets.has(boardIndex)
-                      ? '.'
-                      : ''}
-                </span>
-              )}
+                <img
+                  className={`piece piece--${cell}`}
+                  src={cell === 'white' ? whitePawn : blackPawn}
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                />
+              ) : null}
             </button>
           )
         })}
@@ -114,4 +115,39 @@ function getDisplayIndexes(orientation: 'white' | 'black') {
   const indexes = Array.from({ length: 9 }, (_, index) => index)
 
   return orientation === 'black' ? indexes.reverse() : indexes
+}
+
+function isLightSquare(index: number) {
+  const row = Math.floor(index / 3)
+  const col = index % 3
+
+  return (row + col) % 2 === 0
+}
+
+function buildWinLine(winnerLine: number[] | null, orientation: 'white' | 'black') {
+  if (!winnerLine || winnerLine.length < 3) {
+    return null
+  }
+
+  const start = toDisplayPoint(winnerLine[0], orientation)
+  const end = toDisplayPoint(winnerLine[2], orientation)
+
+  return {
+    x1: start.x,
+    y1: start.y,
+    x2: end.x,
+    y2: end.y,
+  }
+}
+
+function toDisplayPoint(index: number, orientation: 'white' | 'black') {
+  const row = Math.floor(index / 3)
+  const col = index % 3
+  const displayRow = orientation === 'black' ? 2 - row : row
+  const displayCol = orientation === 'black' ? 2 - col : col
+
+  return {
+    x: displayCol + 0.5,
+    y: displayRow + 0.5,
+  }
 }

@@ -1,70 +1,157 @@
+import { useEffect, useRef, useState } from 'react'
+
 type ControlsProps = {
   mode: 'bot' | 'local' | 'online'
   difficulty: 'easy' | 'hard'
   humanSide: 'white' | 'black'
+  musicEnabled: boolean
   onModeChange: (mode: 'bot' | 'local' | 'online') => void
   onDifficultyChange: (difficulty: 'easy' | 'hard') => void
   onHumanSideChange: (side: 'white' | 'black') => void
   onRestart: () => void
+  onMusicToggle: () => void
 }
 
 export function Controls({
   mode,
   difficulty,
   humanSide,
+  musicEnabled,
   onModeChange,
   onDifficultyChange,
   onHumanSideChange,
   onRestart,
+  onMusicToggle,
 }: ControlsProps) {
   return (
-    <section className="panel controls-panel">
-      <div className="panel__header">
-        <p className="panel__eyebrow">Game Controls</p>
-        <h2>Pick your duel</h2>
-      </div>
-
-      <label className="control-field">
-        <span>Game mode</span>
-        <select
-          value={mode}
-          onChange={(event) => onModeChange(event.target.value as 'bot' | 'local' | 'online')}
-        >
-          <option value="bot">Vs Bot</option>
-          <option value="local">Local 2P</option>
-          <option value="online">Online Room</option>
-        </select>
-      </label>
+    <section className="controls-strip" aria-label="Game controls">
+      <Dropdown
+        label="Game mode"
+        value={mode}
+        options={[
+          { value: 'bot', label: 'Vs Bot' },
+          { value: 'local', label: 'Local 2P' },
+          { value: 'online', label: 'Online Room' },
+        ]}
+        onChange={(value) => onModeChange(value as 'bot' | 'local' | 'online')}
+      />
 
       {mode === 'bot' ? (
         <>
-          <label className="control-field">
-            <span>Bot difficulty</span>
-            <select
-              value={difficulty}
-              onChange={(event) => onDifficultyChange(event.target.value as 'easy' | 'hard')}
-            >
-              <option value="easy">Easy</option>
-              <option value="hard">Hard</option>
-            </select>
-          </label>
+          <Dropdown
+            label="Bot difficulty"
+            value={difficulty}
+            options={[
+              { value: 'easy', label: 'Easy' },
+              { value: 'hard', label: 'Hard' },
+            ]}
+            onChange={(value) => onDifficultyChange(value as 'easy' | 'hard')}
+          />
 
-          <label className="control-field">
-            <span>Your side</span>
-            <select
-              value={humanSide}
-              onChange={(event) => onHumanSideChange(event.target.value as 'white' | 'black')}
-            >
-              <option value="white">White</option>
-              <option value="black">Black</option>
-            </select>
-          </label>
+          <Dropdown
+            label="Your side"
+            value={humanSide}
+            options={[
+              { value: 'white', label: 'White' },
+              { value: 'black', label: 'Black' },
+            ]}
+            onChange={(value) => onHumanSideChange(value as 'white' | 'black')}
+          />
         </>
       ) : null}
 
-      <button type="button" className="action-button" onClick={onRestart}>
+      <button type="button" className="control-chip control-chip--button" onClick={onRestart}>
         Restart match
       </button>
+      <button
+        type="button"
+        className={`control-chip control-chip--button ${musicEnabled ? 'is-active' : ''}`}
+        onClick={onMusicToggle}
+        aria-pressed={musicEnabled}
+      >
+        {musicEnabled ? 'Music on' : 'Music off'}
+      </button>
     </section>
+  )
+}
+
+type DropdownOption = {
+  value: string
+  label: string
+}
+
+function Dropdown({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: string
+  options: DropdownOption[]
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
+
+  const activeLabel = options.find((option) => option.value === value)?.label ?? value
+
+  return (
+    <div className="control-chip control-dropdown" ref={rootRef}>
+      <span>{label}</span>
+      <button
+        type="button"
+        className="control-dropdown__trigger"
+        aria-label={`${label}, ${activeLabel}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="control-dropdown__value">{activeLabel}</span>
+        <span className="control-dropdown__caret" aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <div className="control-dropdown__menu" role="listbox" aria-label={label}>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`control-dropdown__option ${option.value === value ? 'is-active' : ''}`}
+              role="option"
+              aria-selected={option.value === value}
+              onClick={() => {
+                onChange(option.value)
+                setOpen(false)
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
